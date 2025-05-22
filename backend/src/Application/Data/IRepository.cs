@@ -7,7 +7,7 @@
         IQueryable<T> AsQueryable();
         Task AddAsync(T entity);
         Task<T> ReloadEntity(T entity, TKey id);
-        void Update(T entity);
-        void Delete(T entity);
+        Task UpdateAsync(T entity);
+        Task DeleteAsync(T entity);
     }
 }

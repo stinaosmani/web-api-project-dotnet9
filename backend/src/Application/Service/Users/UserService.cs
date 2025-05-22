@@ -30,7 +30,7 @@ namespace backend.src.Application.Service.Users
                 x.FirstName.ToLower().Contains(keyword) ||
                 x.LastName.ToLower().Contains(keyword);
 
-            var query = _userRepository.AsQueryable().Where(predicate);
+            var query = _userRepository.AsQueryable().Where(predicate).Where(x => x.IsDeleted == 0);
 
             var totalCount = await query.CountAsync();
             var items = await query
@@ -49,13 +49,17 @@ namespace backend.src.Application.Service.Users
 
         public async Task<Response<UserDto>> GetByIdAsync(Guid id)
         {
-            var user = await _userRepository.GetByIdAsync(id);
+            var user = await _userRepository.AsQueryable()
+                .Where(x => x.Id == id && x.IsDeleted == 0)
+                .FirstOrDefaultAsync();
+
             if (user == null)
                 return new Response<UserDto>().NotFound("User not found.");
 
             var dto = _mapper.Map<UserDto>(user);
             return new Response<UserDto>().Ok(dto);
         }
+
 
         public async Task<Response<UserDto>> CreateAsync(CreateUserDto input)
         {
@@ -81,7 +85,7 @@ namespace backend.src.Application.Service.Users
                 return new Response<UserDto>().NotFound("User not found.");
 
             _mapper.Map(input, user);
-            _userRepository.Update(user);
+            await _userRepository.UpdateAsync(user);
 
             var dto = _mapper.Map<UserDto>(user);
             return new Response<UserDto>().Ok(dto);
@@ -89,12 +93,16 @@ namespace backend.src.Application.Service.Users
 
         public async Task<Response<bool>> DeleteAsync(Guid id)
         {
-            var user = await _userRepository.GetByIdAsync(id);
-            if (user == null)
+            var entity = await _userRepository.GetByIdAsync(id);
+            if (entity == null)
                 return new Response<bool>().NotFound("User not found.");
 
-            _userRepository.Delete(user);
+            entity.IsDeleted = 1; // Trigger soft-delete
+
+            await _userRepository.UpdateAsync(entity); 
+
             return new Response<bool>().NoContent(true);
         }
+
     }
 }

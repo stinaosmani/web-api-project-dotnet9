@@ -41,16 +41,16 @@ namespace backend.src.Application.Data
             await _context.SaveChangesAsync();
         }
 
-        public void Update(T entity)
+        public async Task UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
-            _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
 
-        public void Delete(T entity)
+        public async Task DeleteAsync(T entity)
         {
             _dbSet.Remove(entity);
-            _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
     }
 }

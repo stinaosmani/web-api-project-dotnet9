@@ -1,6 +1,7 @@
 ﻿using Application.Configuration.Interceptors;
 using Application.Users;
 using backend.src.Application.Data;
+using backend.src.Application.Service.Posts;
 using backend.src.Application.Service.Users;
 
 namespace backend.src.Application.Configuration.DependencyInjection
@@ -10,6 +11,7 @@ namespace backend.src.Application.Configuration.DependencyInjection
         public void Install(IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IPostService, PostService>();
 
             services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
 

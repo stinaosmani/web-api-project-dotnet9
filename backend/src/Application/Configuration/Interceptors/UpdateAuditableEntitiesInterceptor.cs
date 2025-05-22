@@ -44,7 +44,7 @@ namespace Application.Configuration.Interceptors
 
             foreach (var entry in dbContext.ChangeTracker.Entries<ISoftDelete>())
             {
-                if (entry.State == EntityState.Modified && entry.Entity.DeletionTime != null)
+                if (entry.State == EntityState.Modified && entry.Entity.IsDeleted == 1)
                 {
                     if (entry.Entity is IFullAudited fullAudited)
                     {
