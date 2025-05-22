@@ -15,19 +15,7 @@ namespace backend.src.API.Controllers
             _userService = userService;
         }
 
-        /// <summary>
-        /// Get user by ID
-        /// </summary>
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var result = await _userService.GetByIdAsync(id);
-            return StatusCode(result.StatusCode, result);
-        }
-
-        /// <summary>
         /// Get paginated list of users
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] PagedUserResultRequestDto input)
         {
@@ -35,9 +23,15 @@ namespace backend.src.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        /// <summary>
+        /// Get user by ID
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var result = await _userService.GetByIdAsync(id);
+            return StatusCode(result.StatusCode, result);
+        }
+
         /// Create a new user
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUserDto input)
         {
@@ -45,9 +39,7 @@ namespace backend.src.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        /// <summary>
         /// Update an existing user
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto input)
         {
@@ -55,9 +47,7 @@ namespace backend.src.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        /// <summary>
         /// Delete a user
-        /// </summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

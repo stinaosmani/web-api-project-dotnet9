@@ -20,16 +20,6 @@ namespace backend.src.Application.Service.Users
             _mapper = mapper;
         }
 
-        public async Task<Response<UserDto>> GetByIdAsync(Guid id)
-        {
-            var user = await _userRepository.GetByIdAsync(id);
-            if (user == null)
-                return new Response<UserDto>().NotFound("User not found.");
-
-            var dto = _mapper.Map<UserDto>(user);
-            return new Response<UserDto>().Ok(dto);
-        }
-
         public async Task<Response<PagedResultDto<UserDto>>> GetAllAsync(PagedUserResultRequestDto input)
         {
             var keyword = input.Keyword?.ToLower();
@@ -57,12 +47,22 @@ namespace backend.src.Application.Service.Users
             return new Response<PagedResultDto<UserDto>>().Ok(dto);
         }
 
+        public async Task<Response<UserDto>> GetByIdAsync(Guid id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+                return new Response<UserDto>().NotFound("User not found.");
+
+            var dto = _mapper.Map<UserDto>(user);
+            return new Response<UserDto>().Ok(dto);
+        }
+
         public async Task<Response<UserDto>> CreateAsync(CreateUserDto input)
         {
             var exists = await _userRepository.AsQueryable()
-    .Where(x => x.Username == input.Username)
-    .Select(_ => 1)
-    .FirstOrDefaultAsync() != 0;
+                .Where(x => x.Username == input.Username)
+                .Select(_ => 1)
+                .FirstOrDefaultAsync() != 0;
 
             if (exists)
                 return new Response<UserDto>().BadRequest("Username already exists.");
@@ -94,7 +94,7 @@ namespace backend.src.Application.Service.Users
                 return new Response<bool>().NotFound("User not found.");
 
             _userRepository.Delete(user);
-            return new Response<bool>().Ok(true);
+            return new Response<bool>().NoContent(true);
         }
     }
 }

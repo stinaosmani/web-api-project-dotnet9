@@ -44,13 +44,13 @@ namespace backend.src.Application.Data
         public void Update(T entity)
         {
             _dbSet.Update(entity);
-            _context.SaveChanges();
+            _context.SaveChangesAsync();
         }
 
         public void Delete(T entity)
         {
             _dbSet.Remove(entity);
-            _context.SaveChanges();
+            _context.SaveChangesAsync();
         }
     }
 }

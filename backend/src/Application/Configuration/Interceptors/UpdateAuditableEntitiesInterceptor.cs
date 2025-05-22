@@ -24,7 +24,7 @@ namespace Application.Configuration.Interceptors
                 return base.SavingChangesAsync(eventData, result, cancellationToken);
 
             var user = _httpContextAccessor.HttpContext?.User;
-            var currentUserId = user?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = user?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
 
             foreach (var entry in dbContext.ChangeTracker.Entries<IAuditableEntity>())
             {
