@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Infrastructure.Persistence
 {
@@ -17,6 +18,18 @@ namespace Infrastructure.Persistence
                         .HasMany(u => u.Posts)
                         .WithOne(p => p.Author)
                         .HasForeignKey(p => p.AuthorId);
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(bool))
+                    {
+                        property.SetColumnType("NUMBER(1)"); // Oracle expects NUMBER(1) for booleans
+                        property.SetValueConverter(new BoolToZeroOneConverter<int>());
+                    }
+                }
+            }
         }
     }
 }
