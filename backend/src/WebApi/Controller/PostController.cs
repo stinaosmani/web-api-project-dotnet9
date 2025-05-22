@@ -1,5 +1,6 @@
 ﻿using backend.src.Application.Service.Posts;
 using backend.src.Application.Service.Posts.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.src.API.Controllers
@@ -16,6 +17,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Get paginated list of posts
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] PagedPostResultRequestDto input)
         {
@@ -24,6 +26,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Get a post by ID
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -32,6 +35,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Create a new post
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreatePostDto input)
         {
@@ -40,6 +44,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Update an existing post
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePostDto input)
         {
@@ -48,6 +53,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Delete a post
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

@@ -1,5 +1,6 @@
 ﻿using Application.Users;
 using backend.src.Application.Service.Users.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.src.API.Controllers
@@ -15,7 +16,15 @@ namespace backend.src.API.Controllers
             _userService = userService;
         }
 
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto input)
+        {
+            var result = await _userService.LoginAsync(input);
+            return StatusCode(result.StatusCode, result);
+        }
+
         /// Get paginated list of users
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] PagedUserResultRequestDto input)
         {
@@ -24,6 +33,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Get user by ID
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -32,6 +42,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Create a new user
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUserDto input)
         {
@@ -40,6 +51,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Update an existing user
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto input)
         {
@@ -48,6 +60,7 @@ namespace backend.src.API.Controllers
         }
 
         /// Delete a user
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

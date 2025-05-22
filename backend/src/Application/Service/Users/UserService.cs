@@ -3,21 +3,44 @@ using AutoMapper;
 using backend.src.Application.Data;
 using backend.src.Application.Models.Common.Pagination;
 using backend.src.Application.Models.Common.Response;
+using backend.src.Application.Service.Auth;
 using backend.src.Application.Service.Users.Dto;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace backend.src.Application.Service.Users
 {
     public class UserService : IUserService
     {
         private readonly IRepository<User, Guid> _userRepository;
+        private readonly IJwtService _jwtService;
         private readonly IMapper _mapper;
 
-        public UserService(IRepository<User, Guid> userRepository, IMapper mapper)
+        public UserService(IRepository<User, Guid> userRepository, IJwtService jwtService, IMapper mapper)
         {
             _userRepository = userRepository;
+            _jwtService = jwtService;
             _mapper = mapper;
+        }
+
+        public async Task<Response<string>> LoginAsync(LoginDto input)
+        {
+            var user = await _userRepository.AsQueryable()
+                .Where(x => x.Username == input.Username && x.IsDeleted == 0)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return new Response<string>().UnAuthorized("Invalid username or password.");
+
+            var hashedInput = HashPassword(input.Password);
+            if (user.Password != hashedInput)
+                return new Response<string>().UnAuthorized("Invalid username or password.");
+
+            var token = _jwtService.GenerateToken(user.Id, user.Username, "User");
+
+            return new Response<string>().Ok(token);
         }
 
         public async Task<Response<PagedResultDto<UserDto>>> GetAllAsync(PagedUserResultRequestDto input)
@@ -72,6 +95,9 @@ namespace backend.src.Application.Service.Users
                 return new Response<UserDto>().BadRequest("Username already exists.");
 
             var user = _mapper.Map<User>(input);
+
+            user.Password = HashPassword(input.Password);
+
             await _userRepository.AddAsync(user);
 
             var dto = _mapper.Map<UserDto>(user);
@@ -104,5 +130,11 @@ namespace backend.src.Application.Service.Users
             return new Response<bool>().NoContent(true);
         }
 
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(hashedBytes);
+        }
     }
 }

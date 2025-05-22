@@ -6,6 +6,7 @@ namespace Application.Users
 {
     public interface IUserService
     {
+        Task<Response<string>> LoginAsync(LoginDto input);
         Task<Response<PagedResultDto<UserDto>>> GetAllAsync(PagedUserResultRequestDto input);
         Task<Response<UserDto>> GetByIdAsync(Guid id);
         Task<Response<UserDto>> CreateAsync(CreateUserDto input);

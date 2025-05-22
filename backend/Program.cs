@@ -1,32 +1,59 @@
 using Application.Configuration.Interceptors;
 using backend.src.Application.Configuration.DependencyInjection;
+using backend.src.Application.Data.Seed;
+using backend.src.Application.Validators.Posts;
+using backend.src.Application.Validators.Users;
 using backend.src.Infrastructure.Middleware;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register Swagger
+builder.Configuration.AddEnvironmentVariables();
+
+// Swagger + JWT Auth Support
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "xTDB API", Version = "v1" });
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Web API", Version = "v1" });
 
-    //options.AddServer(new OpenApiServer
-    //{
-    //    Url = "https://localhost:7071",
-    //    Description = "Development HTTPS"
-    //});
+    // Use HTTP type with Bearer scheme for JWT
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your token"
+    });
 
-    //options.AddServer(new OpenApiServer
-    //{
-    //    Url = "http://localhost:30000",
-    //    Description = "Docker container"
-    //});
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "bearer",
+                Name = "Authorization",
+                In = ParameterLocation.Header
+            },
+            new List<string>()
+        }
+    });
 });
 
-// Add CORS
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -38,15 +65,20 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Services
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-// Register services via DI installer
 builder.Services.InstallServices(builder.Configuration, typeof(IServiceInstaller).Assembly);
-
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 
-// Register DbContext
+// Validators
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateUserDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateUserDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreatePostDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdatePostDtoValidator>();
+
+// DbContext
 builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
 {
     var interceptor = sp.GetRequiredService<UpdateAuditableEntitiesInterceptor>();
@@ -58,27 +90,54 @@ builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
             oracle => oracle.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
         )
         .EnableSensitiveDataLogging()
-        .LogTo(Console.WriteLine)     
+        .LogTo(Console.WriteLine)
         .AddInterceptors(interceptor, timing);
 });
 
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JWT");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"])),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
 var app = builder.Build();
 
+// DB Migration & Seeding
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+    await DbSeeder.SeedAsync(scope.ServiceProvider);
+}
+
+// Middleware
 app.UseMiddleware<ExceptionMiddleware>();
 
-// Swagger middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiPlayground v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Web API v1");
     });
 }
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();
