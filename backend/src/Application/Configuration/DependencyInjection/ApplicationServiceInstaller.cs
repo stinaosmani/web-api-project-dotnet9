@@ -16,6 +16,7 @@ namespace backend.src.Application.Configuration.DependencyInjection
             services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
 
             services.AddSingleton<UpdateAuditableEntitiesInterceptor>();
+            services.AddSingleton<DbOperationTimingInterceptor>();
         }
     }
 }

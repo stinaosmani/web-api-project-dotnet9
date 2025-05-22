@@ -50,6 +50,7 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
 {
     var interceptor = sp.GetRequiredService<UpdateAuditableEntitiesInterceptor>();
+    var timing = sp.GetRequiredService<DbOperationTimingInterceptor>();
 
     options
         .UseOracle(
@@ -58,7 +59,7 @@ builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         )
         .EnableSensitiveDataLogging()
         .LogTo(Console.WriteLine)     
-        .AddInterceptors(interceptor);
+        .AddInterceptors(interceptor, timing);
 });
 
 
