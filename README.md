@@ -55,6 +55,19 @@ WebApiProject
 ├── docker-compose.yml
 └── .gitignore
 ```
+### Layer Responsibilities (Clean Architecture)
+
+- **Application**  
+  Contains the core business logic, use-case services, DTOs, validators, and configuration. This is the abstraction layer that defines what the application does.
+
+- **Domain**  
+  Holds the enterprise entities and contracts. It defines the problem space and remains isolated from infrastructure concerns.
+
+- **Infrastructure**  
+  Provides concrete implementations for data access, dependency injection, and cross-cutting concerns. It bridges the Application and external systems.
+
+- **WebApi**  
+  Exposes the HTTP endpoints. It serves as the presentation layer that receives requests and returns responses by invoking the Application layer.
 
 ## Features
 
