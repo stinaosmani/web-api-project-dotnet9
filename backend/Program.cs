@@ -112,6 +112,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
+{
+    builder.WebHost.UseKestrel(options =>
+    {
+        options.ListenAnyIP(80);
+    });
+}
+
 var app = builder.Build();
 
 // DB Migration & Seeding
